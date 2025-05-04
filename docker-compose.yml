@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  rag-chatbot-db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_CHATBOT_DB}
+      POSTGRES_USER: ${DB_CHATBOT_USER}
+      POSTGRES_PASSWORD: ${DB_CHATBOT_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - rag-chatbot-networks
+
+  rag-chatbot-chainlit-db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_CHAINLIT_DB}
+      POSTGRES_USER: ${DB_CHAINLIT_USER}
+      POSTGRES_PASSWORD: ${DB_CHAINLIT_PASSWORD}
+    volumes:
+      - postgres_data_chainlit:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - rag-chatbot-networks
+
+  rag-chatbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=rag-chatbot-db
+      - DB_PORT=5432
+      - CHAINLIT_DB_HOST=rag-chatbot-chainlit-db
+      - CHAINLIT_DB_PORT=5432
+    env_file:
+      - .env
+    depends_on:
+      - rag-chatbot-db
+      - rag-chatbot-chainlit-db
+    networks:
+      - rag-chatbot-networks
+    restart: always
+
+volumes:
+  postgres_data:
+  postgres_data_chainlit:
+
+networks:
+  rag-chatbot-networks:
+    driver: bridge
