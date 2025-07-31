@@ -1,17 +1,21 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y curl build-essential && rm -rf /var/lib/apt/lists/*
 
-RUN curl -sSL https://install.python-poetry.org | python3 -
+# Install uv properly
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 
-COPY . .
+# Copy project files
+COPY pyproject.toml uv.lock ./
+COPY src/ src/
 
-RUN poetry config virtualenvs.create true && poetry config virtualenvs.in-project true
-RUN poetry install --no-root --no-interaction --no-ansi
+# Install dependencies using uv
+RUN /root/.local/bin/uv sync --frozen --no-dev
 
 EXPOSE 8000
 
-CMD ["poetry", "run", "chainlit", "run", "src/chainlit_app.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/root/.local/bin/uv", "run", "chainlit", "run", "src/chainlit_app.py", "--host", "0.0.0.0", "--port", "8000"]

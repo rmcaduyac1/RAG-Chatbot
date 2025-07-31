@@ -34,5 +34,33 @@ index_medicine = pc.Index("medicine-book")
 index_hazard = pc.Index("hazard")
 vector_store_medicine = PineconeVectorStore(embedding = embeddings, index = index_medicine)
 vector_store_hazard = PineconeVectorStore(embedding = embeddings, index = index_hazard)
-ids_medicine = vector_store_medicine.add_documents(documents = medicine_splits)
-ids_hazard = vector_store_hazard.add_documents(documents = hazard_splits)
+
+# Process documents in batches to avoid OpenAI token limits
+def add_documents_in_batches(vector_store, documents, batch_size=1500):
+    all_ids = []
+    i = 0
+    while i < len(documents):
+        batch = documents[i:i + batch_size]
+        print(f"Processing batch {i//batch_size + 1} ({len(batch)} documents)")
+        
+        try:
+            batch_ids = vector_store.add_documents(documents = batch)
+            all_ids.extend(batch_ids)
+            i += batch_size
+        except Exception as e:
+            if "max_tokens_per_request" in str(e):
+                print(f"Batch too large, retrying with smaller size...")
+                # Retry with half the batch size
+                half_batch = documents[i:i + batch_size//2]
+                batch_ids = vector_store.add_documents(documents = half_batch)
+                all_ids.extend(batch_ids)
+                i += batch_size//2
+            else:
+                raise e
+    return all_ids
+
+print(f"Processing {len(medicine_splits)} medicine documents...")
+ids_medicine = add_documents_in_batches(vector_store_medicine, medicine_splits)
+
+print(f"Processing {len(hazard_splits)} hazard documents...")
+ids_hazard = add_documents_in_batches(vector_store_hazard, hazard_splits)

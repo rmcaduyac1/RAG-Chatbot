@@ -21,7 +21,7 @@ A Retrieval-Augmented Generation (RAG) chatbot built with Python, Chainlit, and 
 - **Backend**: Python 3.11  
 - **Database**: PostgreSQL  
 - **Containerization**: Docker, Docker Compose  
-- **Dependency Management**: Poetry  
+- **Dependency Management**: uv 
 
 ---
 
@@ -44,19 +44,21 @@ A Retrieval-Augmented Generation (RAG) chatbot built with Python, Chainlit, and 
 
     CHAINLIT_AUTH_SECRET="<placeholder>"
 
-    LANGSMITH_TRACING="true"
-    LANGSMITH_ENDPOINT="https://api.smith.langchain.com"
-    LANGSMITH_API_KEY="<placeholder>"
-    LANGSMITH_PROJECT="<placeholder>"
-
-2. Install dependencies using poetry
+Note, CHAINLIT_AUTH_SECRET can be obtained using the command:
 ```bash
-poetry install
+chainlit create-secret
+```
+
+2. Install dependencies using uv and activate venv
+```bash
+uv install
+uv sync
+source .venv/bin/activate
 ```
 
 3. Run the `vectorstore.py` to store the embeddings of the book inside Pinecone
 ```bash
-poetry run python src/data/vectorstore.py
+uv run python -m src.data.vectorstore
 ```
 
 4. Run the application
